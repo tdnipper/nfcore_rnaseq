@@ -6,7 +6,6 @@ fi
 # Trim reads before running bbsplit
 podman run --rm -it \
     -v ./genomes/:/genomes/ \
-    -v ./bbsplit/:/out/ \
     -v ./raw_data/:/raw_data/ \
     -v ./bbsplit/trimmed:/trimmed/ \
     fastp:0.23.4--h5f740d0_0 bash /out/trim_reads.sh
