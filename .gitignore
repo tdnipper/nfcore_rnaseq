@@ -2,3 +2,4 @@ genomes/
 raw_data/
 bbsplit/ref/
 bbsplit/*fa*
+bbsplit/*txt
