@@ -7,7 +7,8 @@ fi
 podman run --rm -it \
     -v ./genomes/:/genomes/ \
     -v ./raw_data/:/raw_data/ \
-    -v ./bbsplit/trimmed:/trimmed/ \
+    -v ./bbsplit/:/out/ \
+    -v ./bbsplit/trimmed/:/trimmed/ \
     fastp:0.23.4--h5f740d0_0 bash /out/trim_reads.sh
 
 # Run bbsplit to split reads
