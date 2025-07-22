@@ -1,10 +1,11 @@
 #!/bin/bash
 
 nextflow run nf-core/rnaseq \
+    -r 3.19.0 \
     --input samplesheet.csv \
     --fasta genomes/hybrid_gencode_reformat.fa.gz \
-    --gtf genomes/hybrid_gencode_fixed.gtf.gz \
-    --outdir results_hisat2_gencode_new \
+    --gtf genomes/hybrid_gencode_fixed.filtered.gtf.gz \
+    --outdir results_hisat2 \
     --with_umi \
     --umitools_bc_pattern NNNNNNNNNNN \
     --aligner hisat2 \
@@ -18,4 +19,5 @@ nextflow run nf-core/rnaseq \
     --save_reference \
     --save_align_intermeds \
     -resume \
+    --skip_gtf_transcript_filter \
     --gencode
