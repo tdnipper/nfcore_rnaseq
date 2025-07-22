@@ -19,5 +19,5 @@ nextflow run nf-core/rnaseq \
     --save_reference \
     --save_align_intermeds \
     -resume \
-    --skip_gtf_transcript_filter \
+    --skip_gtf_filter \
     --gencode
