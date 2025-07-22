@@ -1,9 +1,0 @@
-sample,fastq_1,fastq_2,strandedness
-mock_1,bbsplit_check/split/mock-1_R1.fastq.gz,bbsplit_check/split/mock-1_R2.fastq.gz,reverse
-mock_2,bbsplit_check/split/mock-2_R1.fastq.gz,bbsplit_check/split/mock-2_R2.fastq.gz,reverse
-mock_3,bbsplit_check/split/mock-3_R1.fastq.gz,bbsplit_check/split/mock-3_R2.fastq.gz,reverse
-ix_1,bbsplit_check/split/ix-1_R1.fastq.gz,bbsplit_check/split/ix-1_R2.fastq.gz,reverse
-ix_2,bbsplit_check/split/ix-2_R1.fastq.gz,bbsplit_check/split/ix-2_R2.fastq.gz,reverse
-ix_3,bbsplit_check/split/ix-3_R1.fastq.gz,bbsplit_check/split/ix-3_R2.fastq.gz,reverse
-si_2,bbsplit_check/split/si-2_R1.fastq.gz,bbsplit_check/split/si-2_R2.fastq.gz,reverse
-si_3,bbsplit_check/split/si-3_R1.fastq.gz,bbsplit_check/split/si-3_R2.fastq.gz,reverse
