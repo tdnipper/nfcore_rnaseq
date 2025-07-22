@@ -27,13 +27,8 @@ for R1_FILE in "$RAW_DATA_DIR"/*_trimmed_1.fastq.gz; do
             in="$R1_FILE" \
             in2="$R2_FILE" \
             ref="$INDEX_DIR/ref" \
-            basename="$OUTPUT_DIR/${BASENAME}_%.fastq.gz" \
-            out1="$OUTPUT_DIR/${BASENAME}_1.fastq.gz" \
-            out2="$OUTPUT_DIR/${BASENAME}_2.fastq.gz" \
-            outu1="$OUTPUT_DIR/${BASENAME}_unmapped_1.fastq.gz" \
-            outu2="$OUTPUT_DIR/${BASENAME}_unmapped_2.fastq.gz" \
-            refstats="$OUTPUT_DIR/${BASENAME}_stats.txt" \
-            
+            basename="$OUTPUT_DIR/${BASENAME}_%#.fastq.gz" \
+            refstats="$OUTPUT_DIR/${BASENAME}_stats.txt"
     else
         echo "Warning: Missing R2 file for $R1_FILE. Skipping..."
     fi
