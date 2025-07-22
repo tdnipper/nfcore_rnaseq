@@ -1,9 +1,3 @@
 sample,fastq_1,fastq_2,strandedness
-mock_1,raw_data/mock-1_R1.fastq.gz,raw_data/mock-1_R2.fastq.gz,reverse
-mock_2,raw_data/mock-2_R1.fastq.gz,raw_data/mock-2_R2.fastq.gz,reverse
-mock_3,raw_data/mock-3_R1.fastq.gz,raw_data/mock-3_R2.fastq.gz,reverse
-ix_1,raw_data/ix-1_R1.fastq.gz,raw_data/ix-1_R2.fastq.gz,reverse
-ix_2,raw_data/ix-2_R1.fastq.gz,raw_data/ix-2_R2.fastq.gz,reverse
-ix_3,raw_data/ix-3_R1.fastq.gz,raw_data/ix-3_R2.fastq.gz,reverse
-si_2,raw_data/si-2_R1.fastq.gz,raw_data/si-2_R2.fastq.gz,reverse
-si_3,raw_data/si-3_R1.fastq.gz,raw_data/si-3_R2.fastq.gz,reverse
+mock,bbsplit/mock_human_1.fastq.gz,bbsplit/mock_human_2.fastq.gz,reverse
+infect,bbsplit/infect_human_1.fastq.gz,bbsplit/infect_human_2.fastq.gz,reverse
