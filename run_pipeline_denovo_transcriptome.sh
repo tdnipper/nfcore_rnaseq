@@ -1,9 +1,10 @@
 #!/bin/bash
 
 nextflow run nf-core/rnaseq \
+    -r 3.19.0 \
     --input samplesheet.csv \
     --fasta genomes/hybrid_gencode.fa.gz \
-    --gtf stringtie/gencode_merged_transcriptome.gtf \
+    --gtf stringtie/stringtie_transcriptome.gtf.gz \
     --outdir results_denovoTranscriptome \
     --with_umi \
     --umitools_bc_pattern NNNNNNNNNNN \
