@@ -3,6 +3,6 @@ podman run --rm -it \
     -v ./bbsplit/:/bbsplit/ \
     bbmap:39.19--he5f24ec_0 \
     bbsplit.sh \
-    ref_human=/genomes/human_fluc.fasta.gz \
+    ref_human=/genomes/human_fluc_reformat.fa.gz \
     ref_flu=/genomes/wsn_1933.fasta.gz \
     path=/bbsplit/
