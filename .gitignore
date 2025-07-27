@@ -3,3 +3,8 @@ raw_data/
 bbsplit/ref/
 bbsplit/*fa*
 bbsplit/*txt
+bbsplit/*trim*/
+results*/
+work/
+.nextflow*
+stringtie/
