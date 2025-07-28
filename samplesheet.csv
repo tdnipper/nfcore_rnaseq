@@ -1,3 +1,0 @@
-sample,fastq_1,fastq_2,strandedness
-mock,bbsplit/mock_human_1.fastq.gz,bbsplit/mock_human_2.fastq.gz,reverse
-infect,bbsplit/infect_human_1.fastq.gz,bbsplit/infect_human_2.fastq.gz,reverse
