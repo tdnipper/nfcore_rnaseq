@@ -13,6 +13,6 @@ podman run --rm \
     stringtie:3.0.0--h29c0135_0 \
     bash -c "
         cp /genomes/hybrid_gencode_fixed.filtered.gtf reference.gtf && \
-        gtf_files=\$(find /results/ -name '*.transcripts.gtf' -type f) && \
+        gtf_files=\$(find /results/ -name '*.gtf' -type f) && \
         stringtie --merge -p 12 -o /stringtie/gencode_merged_transcriptome.gtf -G reference.gtf \${gtf_files}
     "
