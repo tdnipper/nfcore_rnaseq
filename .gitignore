@@ -8,3 +8,5 @@ results*/
 work/
 .nextflow*
 stringtie/
+filtered_reads/
+trimgalore*
