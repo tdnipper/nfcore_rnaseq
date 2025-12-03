@@ -3,11 +3,16 @@
 # Run stringtie without -G on hisat2 bam files
 
 GENOME_PATH=$1
-GENOME=$(basename $GENOME_PATH .gtf.gz)
+GENOME=$(basename "$GENOME_PATH" .gtf.gz)
 DIR=$2
 
-if [ ! GENOME_PATH ]; then
-    echo "Usage: bash stringtie_denovo.sh <path_to_genome_gtf>"
+if [ -z "$GENOME_PATH" ]; then
+    echo "Usage: bash stringtie_denovo.sh <path_to_genome_gtf> <dir>"
+    exit 1
+fi
+
+if [ -z "$DIR" ]; then
+    echo "Usage: bash stringtie_denovo.sh <path_to_genome_gtf> <dir>"
     exit 1
 fi
 
