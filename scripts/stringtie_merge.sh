@@ -3,7 +3,7 @@
 # Merge GTF files from rnaseq pipeline using StringTie
 
 GENOME_PATH=$1
-GENOME=$(basename $GENOME_PATH .gtf.gz)
+GENOME=$(basename "$GENOME_PATH" .gtf.gz)
 DIR=$2
 
 if [ ! -d "$DIR/stringtie" ]; then
