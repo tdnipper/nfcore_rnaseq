@@ -12,9 +12,9 @@ if [ ! -d "$DIR/stringtie" ]; then
 fi
 
 podman run --rm \
-    -v $DIR/results_hisat2/genome/:/genomes/ \
-    -v $DIR/results_hisat2/hisat2/stringtie/:/results/ \
-    -v $DIR/stringtie:/stringtie/ \
+    -v "$DIR/results_hisat2/genome/":/genomes/ \
+    -v "$DIR/stringtie":/stringtie/ \
+    -v "$DIR/results_hisat2/hisat2/stringtie/":/results/ \
     stringtie:3.0.0--h29c0135_0 \
     bash -c "
         cp /genomes/$GENOME.filtered.gtf reference.gtf && \
