@@ -59,8 +59,14 @@ process STRINGTIE_DENOVO {
 
     script:
     """
+    echo "Checking for hisat2 results"
+    if [ ! -d "${params.dir}/results_hisat2/hisat2" ]; then
+        echo "ERROR: expected hisat2 results in ${params.dir}/results_hisat2/hisat2 but directory not found"
+        exit 1
+    fi
+
     echo "Starting stringtie_denovo.sh"
-    bash ${params.repo}/scripts/stringtie_denovo.sh "${params.gtf}" "${params.dir}"
+    bash "${params.repo}/scripts/stringtie_denovo.sh" "${params.gtf}" "${params.dir}"
     echo "STRINGTIE_DENOVO_DONE"
     """
 }
@@ -75,8 +81,16 @@ process STRINGTIE_MERGE {
 
     script:
     """
+    echo "Checking for per-sample GTFs in ${params.dir}/stringtie"
+    shopt -s nullglob || true
+    gtfs=("${params.dir}/stringtie"/*.gtf)
+    if [ "${#gtfs[@]}" -eq 0 ]; then
+        echo "ERROR: no GTF files found in ${params.dir}/stringtie. Run stringtie_denovo first."
+        exit 1
+    fi
+
     echo "Starting stringtie_merge.sh"
-    bash ${params.repo}/scripts/stringtie_merge.sh "${params.gtf}" "${params.dir}"
+    bash "${params.repo}/scripts/stringtie_merge.sh" "${params.gtf}" "${params.dir}"
     echo "STRINGTIE_MERGE_DONE"
     """
 }
