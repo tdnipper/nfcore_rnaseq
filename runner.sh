@@ -19,7 +19,7 @@ if [ ! -f "$GTF" ]; then
 	exit 1
 fi
 
-bash scripts/run_pipeline.sh $SAMPLESHEET $FASTA $GTF $DIR && \
-bash scripts/stringtie_denovo.sh $GTF $DIR && \
-bash scripts/stringtie_merge.sh $GTF $DIR && \
-bash scripts/run_pipeline_denovo_transcriptome.sh $SAMPLESHEET $FASTA $GTF $DIR
+bash scripts/run_pipeline.sh "$SAMPLESHEET" "$FASTA" "$GTF" "$DIR" && \
+bash scripts/stringtie_denovo.sh "$GTF" "$DIR" && \
+bash scripts/stringtie_merge.sh "$GTF" "$DIR" && \
+bash scripts/run_pipeline_denovo_transcriptome.sh "$SAMPLESHEET" "$FASTA" "$GTF" "$DIR"
