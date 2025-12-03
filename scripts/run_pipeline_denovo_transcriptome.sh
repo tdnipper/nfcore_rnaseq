@@ -2,12 +2,13 @@
 SAMPLESHEET=$1
 FASTA=$2
 GTF=$3
+DIR=$4
 nextflow run nf-core/rnaseq \
     -r 3.22.0 \
     --input $SAMPLESHEET \
     --fasta $FASTA \
     --gtf $GTF \
-    --outdir results_denovoTranscriptome \
+    --outdir $DIR/results_denovoTranscriptome \
     --with_umi \
     --umitools_bc_pattern NNNNNNNNNNNN \
     --skip_alignment \
