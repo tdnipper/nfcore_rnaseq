@@ -33,8 +33,9 @@ Channel
     .value(true)
     .set { start_ch }
 
-process RUN_PIPELINE {
-    tag "run_pipeline"
+process RNASEQ {
+    tag "rnaseq"
+    publishDir "${params.dir}/nextflow_outputs/rnaseq", mode: 'copy', overwrite: true
     input:
     val dummy from start_ch
 
@@ -45,12 +46,15 @@ process RUN_PIPELINE {
     """
     echo "Starting run_pipeline.sh (nf-core/rnaseq wrapper)"
     bash "${params.repo}/scripts/run_pipeline.sh" "${params.samplesheet}" "${params.fasta}" "${params.gtf}" "${params.dir}" || exit 1
+    # create a small manifest for published outputs
+    echo "results_hisat2: ${params.dir}/results_hisat2" > rnaseq.outputs.txt || true
     echo "RUN_PIPELINE_DONE"
     """
 }
 
 process STRINGTIE_DENOVO {
     tag "stringtie_denovo"
+    publishDir "${params.dir}/nextflow_outputs/stringtie_denovo", mode: 'copy', overwrite: true
     input:
     val token from run_done
 
@@ -67,12 +71,15 @@ process STRINGTIE_DENOVO {
 
     echo "Starting stringtie_denovo.sh"
     bash "${params.repo}/scripts/stringtie_denovo.sh" "${params.gtf}" "${params.dir}"
+    # publish a small manifest pointing to per-sample GTFs
+    echo "stringtie_dir: ${params.dir}/stringtie" > stringtie_denovo.outputs.txt || true
     echo "STRINGTIE_DENOVO_DONE"
     """
 }
 
 process STRINGTIE_MERGE {
     tag "stringtie_merge"
+    publishDir "${params.dir}/nextflow_outputs/stringtie_merge", mode: 'copy', overwrite: true
     input:
     val token from denovo_done
 
@@ -91,12 +98,15 @@ process STRINGTIE_MERGE {
 
     echo "Starting stringtie_merge.sh"
     bash "${params.repo}/scripts/stringtie_merge.sh" "${params.gtf}" "${params.dir}"
+    # publish location of merged GTF
+    echo "merged_gtf: ${params.dir}/stringtie/gencode_merged_transcriptome.gtf" > stringtie_merge.outputs.txt || true
     echo "STRINGTIE_MERGE_DONE"
     """
 }
 
 process RUN_PIPELINE_DENOVO {
     tag "run_pipeline_denovo_transcriptome"
+    publishDir "${params.dir}/nextflow_outputs/run_pipeline_denovo", mode: 'copy', overwrite: true
     input:
     val token from merge_done
 
@@ -107,12 +117,13 @@ process RUN_PIPELINE_DENOVO {
     """
     echo "Starting run_pipeline_denovo_transcriptome.sh (nf-core/rnaseq wrapper)"
     bash "${params.repo}/scripts/run_pipeline_denovo_transcriptome.sh" "${params.samplesheet}" "${params.fasta}" "${params.gtf}" "${params.dir}" || exit 1
+    echo "results_denovoTranscriptome: ${params.dir}/results_denovoTranscriptome" > run_pipeline_denovo.outputs.txt || true
     echo "ALL_DONE"
     """
 }
 
 workflow {
-    RUN_PIPELINE()
+    RNASEQ()
     STRINGTIE_DENOVO()
     STRINGTIE_MERGE()
     RUN_PIPELINE_DENOVO()
