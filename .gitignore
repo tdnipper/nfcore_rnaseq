@@ -12,3 +12,4 @@ filtered_reads/
 trimgalore*
 .DS_Store
 .venv/
+test_data/
