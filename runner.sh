@@ -21,4 +21,5 @@ fi
 
 bash scripts/run_pipeline.sh "$SAMPLESHEET" "$FASTA" "$GTF" "$DIR" && \
 bash scripts/stringtie_denovo.sh "$GTF" "$DIR" && \
-bash scripts/run_pipeline_denovo_transcriptome.sh "$SAMPLESHEET" "$FASTA" stringtie/gencode_merged_transcriptome.gtf "$DIR"
+python3 bin/use_ref_id.py $DIR/stringtie/merged_transcriptome.gtf $DIR/stringtie/merged_transcriptome_id.gtf && \
+bash scripts/run_pipeline_denovo_transcriptome.sh "$SAMPLESHEET" "$FASTA" stringtie/merged_transcriptome_id.gtf "$DIR"
