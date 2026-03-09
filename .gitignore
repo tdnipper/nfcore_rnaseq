@@ -13,3 +13,7 @@ trimgalore*
 .DS_Store
 .venv/
 test_data/
+*.old
+*.tar*
+*.log
+denovo_notrim/

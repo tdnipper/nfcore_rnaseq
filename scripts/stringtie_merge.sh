@@ -1,6 +1,6 @@
 #!/bin/bash
 
-# Merge GTF files from rnaseq pipeline using StringTie
+# Merge GTF files from rnaseq pipeline using StringTie (not denovo)
 
 GENOME_PATH=$1
 GENOME=$(basename "$GENOME_PATH" .gtf.gz)

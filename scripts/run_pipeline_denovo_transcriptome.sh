@@ -4,7 +4,7 @@ FASTA=$2
 GTF=$3
 DIR=$4
 nextflow run nf-core/rnaseq \
-    -r 3.22.0 \
+    -r 3.23 \
     --input $SAMPLESHEET \
     --fasta $FASTA \
     --gtf $GTF \
