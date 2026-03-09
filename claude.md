@@ -5,3 +5,7 @@ test data can be derived from fasta files in raw_data
 Use DSL2 instead of DSL1
 
 test run command nextflow run -resume main.nf --samplesheet samplesheet.csv --fasta ../genomes/hybrid/human_h1n1.fa.gz --gtf ../genomes/hybrid/human_h1n1.gtf.gz --dir ./output
+
+reference memory.md for pipeline logic and execution
+
+use .venv for python modules and nf-core
