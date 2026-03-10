@@ -8,7 +8,7 @@ A Nextflow DSL2 pipeline for reference-guided de novo transcriptome assembly and
 
 The pipeline runs as a single Nextflow DSL2 workflow, leveraging nf-core modules and subworkflows:
 
-```
+```bash
 Raw FASTQ (paired-end, UMI-tagged)
         │
         ▼
@@ -131,8 +131,8 @@ nextflow run main.nf \
 | `--stringtie_min_tpm`    | No       | `1`            | Minimum TPM for StringTie merge              |
 | `--skip_fastqc`          | No       | `false`        | Skip FastQC steps                            |
 | `--skip_multiqc`         | No       | `false`        | Skip MultiQC report                          |
-| `--max_memory`           | No       | `202 GB`       | Maximum available RAM                        |
-| `--max_cpus`             | No       | `16`           | Maximum available CPU cores                  |
+| `--max_memory`           | No       | `64 GB`        | Maximum available RAM                        |
+| `--max_cpus`             | No       | `8`            | Maximum available CPU cores                  |
 
 See `nextflow.config` for the full list of configurable parameters.
 
