@@ -109,7 +109,8 @@ Fields:
 ### Basic usage
 
 ```bash
-nextflow run main.nf \
+nextflow run tdnipper/nfcore_rnaseq \
+  -r $VERSION \
   --input samplesheet.csv \
   --fasta /path/to/genome.fa.gz \
   --gtf /path/to/annotation.gtf.gz \
@@ -139,7 +140,8 @@ See `nextflow.config` for the full list of configurable parameters.
 ### Resuming a run
 
 ```bash
-nextflow run main.nf \
+nextflow run tdnipper/nfcore_rnaseq \
+  -r $VERSION \
   --input samplesheet.csv \
   --fasta /path/to/genome.fa.gz \
   --gtf /path/to/annotation.gtf.gz \
@@ -151,7 +153,7 @@ nextflow run main.nf \
 
 ## Output Structure
 
-```
+```text
 results/
 ├── fastqc/
 │   ├── raw/                        # FastQC on raw reads
