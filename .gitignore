@@ -17,3 +17,7 @@ test_data/
 *.tar*
 *.log
 denovo_notrim/
+results*
+.claude/
+claude.md
+*samplesheet*
