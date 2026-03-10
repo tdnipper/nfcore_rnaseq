@@ -23,7 +23,7 @@ Raw FASTQ (paired-end, UMI-tagged)
   │
   ▼
   De Novo Assembly
-  │  StringTie per-sample (no -G) → StringTie merge (with -G)
+  │  StringTie per-sample in nascent mode (--nasc, no -G) → StringTie merge (with -G)
   │  fix_ref_id (replace gene_id with ref_gene_id)
   │
   ▼
