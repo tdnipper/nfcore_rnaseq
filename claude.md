@@ -1,11 +1,27 @@
-test data can be derived from fasta files in raw_data
+# Project Instructions
 
-../genomes/hybrid/human_h1n1.fa.gz and ../genomes/hybrid/human_h1n1.gtf.gz are fasta and gtf references respectively
+## Test Data
 
-Use DSL2 instead of DSL1
+- Test data can be derived from fasta files in `raw_data/`
+- Reference genome: `../genomes/hybrid/human_h1n1.fa.gz`
+- Reference GTF: `../genomes/hybrid/human_h1n1.gtf.gz`
 
-test run command nextflow run -resume main.nf --samplesheet samplesheet.csv --fasta ../genomes/hybrid/human_h1n1.fa.gz --gtf ../genomes/hybrid/human_h1n1.gtf.gz --dir ./output
+## Pipeline
 
-reference memory.md for pipeline logic and execution
+- Use DSL2 (not DSL1)
+- Reference `memory.md` for pipeline logic and execution
 
-use .venv for python modules and nf-core
+## Test Run Command
+
+```bash
+nextflow run -resume main.nf --samplesheet samplesheet.csv --fasta ../genomes/hybrid/human_h1n1.fa.gz --gtf ../genomes/hybrid/human_h1n1.gtf.gz --dir ./output
+```
+
+## Environment
+
+- Use `.venv` for Python modules and nf-core
+- Use Podman for container runtime
+
+## Git
+
+- Don't credit Claude Code in commits and PRs
