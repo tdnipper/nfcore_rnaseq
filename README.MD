@@ -1,100 +1,83 @@
 # De Novo Transcriptome Assembly Pipeline
 
-A Nextflow pipeline for reference-guided de novo transcriptome assembly and quantification from paired-end RNA-seq data. The pipeline discovers novel transcripts and isoforms absent from the reference annotation, then quantifies them across experimental conditions.
+A Nextflow DSL2 pipeline for reference-guided de novo transcriptome assembly and quantification from paired-end RNA-seq data. The pipeline discovers novel transcripts and isoforms absent from the reference annotation, then quantifies them across experimental conditions.
 
 ---
 
 ## Overview
 
-The pipeline runs four sequential stages:
+The pipeline runs as a single Nextflow DSL2 workflow, leveraging nf-core modules and subworkflows:
 
 ```
 Raw FASTQ (paired-end, UMI-tagged)
         │
         ▼
-[Stage 1] RNASEQ — nf-core/rnaseq + HISAT2
-        │  Adapter trimming, UMI deduplication, genome alignment
-        │  Output: UMI-deduped sorted BAMs
-        │
-        ▼
-[Stage 2] STRINGTIE_DENOVO — StringTie 3.0.0 (per-sample)
-        │  Pure de novo assembly (no reference constraint)
-        │  Output: per-sample GTFs
-        │
-        ▼
-[Stage 3] STRINGTIE_MERGE — StringTie 3.0.0 --merge
-        │  Consolidate all per-sample GTFs, anchored to reference annotation
-        │  Output: gencode_merged_transcriptome.gtf
-        │
-        ▼
-[Stage 4] RUN_PIPELINE_DENOVO — nf-core/rnaseq + Salmon
-           Pseudo-alignment quantification against assembled transcriptome
-           Output: TPM and count estimates per transcript
+  QC & Preprocessing
+  │  FastQC (raw) → UMI extract → fastp trimming → FastQC (trimmed)
+  │  FQ_LINT validation, strandedness inference
+  │
+  ▼
+  Genome Alignment
+  │  HISAT2 build (with splice sites) → HISAT2 align (--dta)
+  │  SAMTOOLS sort/index → UMI deduplication
+  │
+  ▼
+  De Novo Assembly
+  │  StringTie per-sample (no -G) → StringTie merge (with -G)
+  │  fix_ref_id (replace gene_id with ref_gene_id)
+  │
+  ▼
+  Quantification
+  │  GFFREAD → Salmon index → Salmon quant
+  │  tx2gene → tximeta (gene & transcript count matrices)
+  │
+  ▼
+  MultiQC Report
 ```
+
+---
+
+## Pipeline Steps
+
+| Step | Process                                  | Description                                                     |
+| ---- | ---------------------------------------- | --------------------------------------------------------------- |
+| 0    | GUNZIP_FASTA / GUNZIP_GTF                | Decompress reference inputs if gzipped                          |
+| 1    | GFFREAD_REF                              | Extract reference transcript FASTA (for strandedness inference)  |
+| 2    | FASTQ_QC_TRIM_FILTER_SETSTRANDEDNESS     | FastQC, UMI extract, fastp, FQ_LINT, strandedness inference     |
+| 3    | HISAT2_EXTRACTSPLICESITES + HISAT2_BUILD | Build HISAT2 index with splice site awareness                   |
+| 4    | FASTQ_ALIGN_HISAT2                       | Align reads with `--dta`, sort and index BAMs                   |
+| 5    | BAM_DEDUP_STATS_SAMTOOLS_UMITOOLS        | UMI-based deduplication                                         |
+| 6    | STRINGTIE_DENOVO                         | Per-sample de novo assembly (no reference guide)                |
+| 7    | STRINGTIE_MERGE                          | Merge all per-sample GTFs, anchored to reference annotation     |
+| 8    | FIX_REF_ID                               | Replace `gene_id` with `ref_gene_id` in merged GTF             |
+| 9    | GFFREAD_DENOVO                           | Extract de novo transcript FASTA from merged GTF                |
+| 10   | SALMON_INDEX                             | Build Salmon index from de novo transcripts                     |
+| 11   | QUANTIFY_PSEUDO_ALIGNMENT                | Salmon quant, tx2gene, tximeta count matrices                   |
+| 12   | MULTIQC                                  | Aggregate QC report                                             |
 
 ---
 
 ## Pipeline Design
 
-### Stage 1 — Genome Alignment (`scripts/run_pipeline.sh`)
+### De Novo Assembly Strategy
 
-Runs **nf-core/rnaseq v3.22.0** using the HISAT2 aligner.
+StringTie is run **without `-G`** (no reference guide) on each sample independently. This maximises discovery of novel transcripts and isoforms by assembling purely from read evidence. The per-sample GTFs are then merged with `stringtie --merge -G reference.gtf` to consolidate transcripts while retaining known gene identifiers.
 
-Key parameters:
-- `--trimmer fastp` with explicit Illumina TruSeq adapter sequences
-- `--with_umi --umitools_bc_pattern NNNNNNNNNNNN` — removes PCR duplicates using 12 bp UMI barcodes
-- `--skip_pseudo_alignment` — alignment only, no Salmon at this stage
-- `--save_reference` — saves the filtered reference GTF used for alignment
-- `-resume` — Nextflow resume is always enabled
+After merging, `use_ref_id.py` replaces `gene_id` with `ref_gene_id` so that known transcripts retain their original identifiers (e.g., ENSG IDs) in downstream quantification.
 
-Output directory: `<dir>/results_hisat2/`
-- `hisat2/*.umi_dedup.sorted.bam` — deduplicated, sorted alignments
-- `genome/<genome>.filtered.gtf` — reference GTF filtered to sequences present in the FASTA
+### Strandedness Inference
 
-### Stage 2 — De Novo Assembly (`main.nf: STRINGTIE_DENOVO`)
-
-Runs **StringTie 3.0.0** on each BAM independently inside a container.
-
-Key design choice: StringTie is run **without `-G`** (no reference guide), so transcripts are assembled purely from the read evidence. This maximises discovery of novel transcripts and isoforms.
-
-Parameters used:
-- `-p 12` — 12 threads
-- `-m 50` — minimum isoform read coverage of 50
-- `--rf` — reverse-forward strand orientation
-
-After per-sample assembly, a preliminary merge is run with `stringtie --merge` guided by the reference GTF to produce `merged_transcriptome.gtf`.
-
-Output directory: `<dir>/stringtie/`
-- `<sample>_transcriptome.gtf` — one GTF per sample
-
-### Stage 3 — GTF Merge (`main.nf: STRINGTIE_MERGE`, `scripts/stringtie_merge.sh`)
-
-Runs **StringTie 3.0.0 --merge** to consolidate all per-sample GTFs into a single transcriptome annotation, guided by the reference GTF.
-
-Using the reference as a guide (`-G reference.gtf`) ensures that known transcripts are retained with their original identifiers while novel transcripts are added alongside them.
-
-Output: `<dir>/stringtie/gencode_merged_transcriptome.gtf`
-
-### Stage 4 — Quantification (`scripts/run_pipeline_denovo_transcriptome.sh`)
-
-Runs **nf-core/rnaseq v3.22.0** with Salmon pseudo-alignment against the assembled transcriptome.
-
-Key parameters:
-- `--skip_alignment` — no HISAT2 in this stage
-- `--pseudo_aligner salmon` — Salmon builds an index from the merged GTF + genome FASTA
-- Same UMI and trimming settings as Stage 1
-
-Output directory: `<dir>/results_denovoTranscriptome/`
-- `salmon/` — per-sample TPM tables, count matrices, and Salmon index
+When `strandedness` is set in the samplesheet (e.g., `reverse`), that value is used directly. When set to `auto`, the pipeline builds a temporary Salmon index from the reference transcripts and infers strandedness from a subsample of reads.
 
 ---
 
 ## Requirements
 
-- **Nextflow** (tested with nf-core/rnaseq v3.22.0)
-- **Podman** (or Docker) — used by nf-core/rnaseq stages; StringTie stages use a named container image
-- **StringTie container**: `stringtie:3.0.0--h29c0135_0`
+- **Nextflow** ≥ 22.10.0 (DSL2)
+- **Podman** — configured as the container runtime (`podman.enabled = true`)
 - Sufficient disk space for intermediate BAMs (~2–3× raw data size)
+
+All software dependencies are handled via containers (pulled from `quay.io/biocontainers/`).
 
 ---
 
@@ -109,14 +92,15 @@ infect,raw_data/infect_R1.fastq.gz,raw_data/infect_R2.fastq.gz,reverse
 ```
 
 Fields:
+
 - `sample` — sample name (used for output file naming)
 - `fastq_1` / `fastq_2` — paths to paired-end FASTQ files (can be relative to working directory)
-- `strandedness` — library strandedness (`reverse`, `forward`, or `unstranded`)
+- `strandedness` — library strandedness (`reverse`, `forward`, `unstranded`, or `auto`)
 
 ### Reference Files
 
-- **Genome FASTA** — the reference genome sequence
-- **Genome GTF** — reference gene annotation (e.g., GENCODE or Ensembl GTF)
+- **Genome FASTA** — reference genome sequence (`.fa` or `.fa.gz`)
+- **Genome GTF** — reference gene annotation (`.gtf` or `.gtf.gz`)
 
 ---
 
@@ -126,31 +110,40 @@ Fields:
 
 ```bash
 nextflow run main.nf \
-  --samplesheet samplesheet.csv \
-  --fasta /path/to/genome.fa \
-  --gtf /path/to/annotation.gtf \
-  --dir /path/to/output
+  --input samplesheet.csv \
+  --fasta /path/to/genome.fa.gz \
+  --gtf /path/to/annotation.gtf.gz \
+  --outdir results
 ```
 
 ### Parameters
 
-| Parameter | Required | Description |
-|-----------|----------|-------------|
-| `--samplesheet` | Yes | Path to CSV samplesheet |
-| `--fasta` | Yes | Path to reference genome FASTA |
-| `--gtf` | Yes | Path to reference genome GTF |
-| `--dir` | No | Output directory (defaults to current working directory) |
+| Parameter                | Required | Default        | Description                                  |
+| ------------------------ | -------- | -------------- | -------------------------------------------- |
+| `--input`                | Yes      | —              | Path to CSV samplesheet                      |
+| `--fasta`                | Yes      | —              | Path to reference genome FASTA               |
+| `--gtf`                  | Yes      | —              | Path to reference genome GTF                 |
+| `--outdir`               | No       | `./results`    | Output directory                             |
+| `--hisat2_index`         | No       | —              | Pre-built HISAT2 index (skips HISAT2_BUILD)  |
+| `--with_umi`             | No       | `true`         | Enable UMI extraction and deduplication      |
+| `--umitools_bc_pattern`  | No       | `NNNNNNNNNNNN` | UMI barcode pattern (12 bp)                  |
+| `--stringtie_min_length` | No       | `50`           | Minimum assembled transcript length          |
+| `--stringtie_min_tpm`    | No       | `1`            | Minimum TPM for StringTie merge              |
+| `--skip_fastqc`          | No       | `false`        | Skip FastQC steps                            |
+| `--skip_multiqc`         | No       | `false`        | Skip MultiQC report                          |
+| `--max_memory`           | No       | `202 GB`       | Maximum available RAM                        |
+| `--max_cpus`             | No       | `16`           | Maximum available CPU cores                  |
+
+See `nextflow.config` for the full list of configurable parameters.
 
 ### Resuming a run
 
-All nf-core/rnaseq invocations include `-resume`. To resume the outer Nextflow pipeline after a failure:
-
 ```bash
 nextflow run main.nf \
-  --samplesheet samplesheet.csv \
-  --fasta /path/to/genome.fa \
-  --gtf /path/to/annotation.gtf \
-  --dir /path/to/output \
+  --input samplesheet.csv \
+  --fasta /path/to/genome.fa.gz \
+  --gtf /path/to/annotation.gtf.gz \
+  --outdir results \
   -resume
 ```
 
@@ -159,64 +152,84 @@ nextflow run main.nf \
 ## Output Structure
 
 ```
-<dir>/
-├── results_hisat2/               # Stage 1 outputs
-│   ├── hisat2/
-│   │   └── *.umi_dedup.sorted.bam
-│   └── genome/
-│       └── <genome>.filtered.gtf
-├── stringtie/                    # Stages 2 & 3 outputs
-│   ├── <sample>_transcriptome.gtf   # per-sample de novo assemblies
-│   ├── merged_transcriptome.gtf     # preliminary merge (Stage 2)
-│   ├── reference.gtf                # copy of reference used for merge
-│   └── gencode_merged_transcriptome.gtf  # final assembled transcriptome
-├── results_denovoTranscriptome/  # Stage 4 outputs
-│   └── salmon/
-│       └── <sample>/             # per-sample Salmon quantification
-└── nextflow_outputs/             # Nextflow process manifests
-    ├── rnaseq/
-    ├── stringtie_denovo/
-    ├── stringtie_merge/
-    └── run_pipeline_denovo/
+results/
+├── fastqc/
+│   ├── raw/                        # FastQC on raw reads
+│   └── trim/                       # FastQC on trimmed reads
+├── trimming/                       # fastp trimmed reads and reports
+├── alignment/
+│   ├── hisat2/                     # HISAT2 alignment logs
+│   ├── samtools/                   # Sorted BAMs, indices, and stats
+│   │   └── stats/
+│   └── dedup/                      # UMI-deduplicated BAMs and stats
+│       └── stats/
+├── stringtie/
+│   ├── denovo/                     # Per-sample de novo GTFs
+│   └── merge/                      # Merged GTF + fixed ref_id GTF
+├── salmon/
+│   ├── quant/                      # Per-sample Salmon quantification
+│   ├── tximeta/                    # Gene and transcript count matrices
+│   └── se/                         # SummarizedExperiment objects
+├── multiqc/                        # Aggregated QC report
+└── pipeline_info/                  # Nextflow timeline, report, trace, DAG
+```
+
+---
+
+## Project Structure
+
+```text
+.
+├── main.nf                         # Pipeline entry point
+├── nextflow.config                 # All parameters and process configuration
+├── workflows/
+│   └── denovo_rnaseq.nf            # Main workflow (13 steps)
+├── modules/
+│   ├── nf-core/                    # nf-core community modules
+│   └── local/                      # Custom local modules
+│       ├── stringtie_denovo/       # Per-sample de novo assembly (no -G)
+│       ├── stringtie_merge/        # Merge with reference GTF
+│       └── fix_ref_id/             # Replace gene_id with ref_gene_id
+├── subworkflows/
+│   └── nf-core/                    # nf-core subworkflows
+│       ├── fastq_qc_trim_filter_setstrandedness/
+│       ├── fastq_align_hisat2/
+│       ├── bam_dedup_stats_samtools_umitools/
+│       └── quantify_pseudo_alignment/
+└── bin/
+    └── use_ref_id.py               # Python script: ref_gene_id replacement
 ```
 
 ---
 
 ## Utility Scripts (`bin/`)
 
-Python helper scripts used for reference file preparation:
+Python helper scripts for reference file preparation:
 
-| Script | Purpose |
-|--------|---------|
-| `filter_gtf.py` | Removes GTF entries for sequences not present in the FASTA |
-| `fix_gene_type.py` | Converts `gene_biotype`/`transcript_biotype` to `gene_type`/`transcript_type` |
-| `fix_gtf_chr.py` | Prepends `chr` to numeric chromosome names (e.g. `1` → `chr1`) |
-| `get_genes.py` | Extracts only gene-level features from a GTF |
-| `reformat_fasta.py` | Reformats FASTA to 61 bp per line |
-| `use_ref_id.py` | Replaces `gene_id` with `ref_gene_id` when both attributes are present |
-
-These are useful when the reference genome uses non-standard chromosome naming conventions or attribute fields that differ from GENCODE/Ensembl defaults.
+| Script             | Purpose                                                                                            |
+| ------------------ | -------------------------------------------------------------------------------------------------- |
+| `use_ref_id.py`    | Replaces `gene_id` with `ref_gene_id` when both attributes are present (used by FIX_REF_ID process) |
+| `filter_gtf.py`    | Removes GTF entries for sequences not present in the FASTA                                         |
+| `fix_gene_type.py` | Converts `gene_biotype`/`transcript_biotype` to `gene_type`/`transcript_type`                      |
+| `fix_gtf_chr.py`   | Prepends `chr` to numeric chromosome names (e.g. `1` → `chr1`)                                    |
+| `get_genes.py`     | Extracts only gene-level features from a GTF                                                       |
+| `reformat_fasta.py` | Reformats FASTA to 61 bp per line                                                                 |
 
 ---
 
-## Configuration (`nextflow.config`)
+## Configuration
 
-```groovy
-process {
-  executor = 'local'
-  cpus = 2
-  memory = '4 GB'
-}
-workDir = './work'
-```
+The pipeline is configured via `nextflow.config`. Key settings:
 
-The outer Nextflow pipeline runs locally. The nf-core/rnaseq sub-pipelines (Stages 1 and 4) have their own internal resource configuration managed by nf-core profiles. To run on a cluster, update `executor` to your scheduler (e.g. `slurm`, `sge`) and adjust `cpus`/`memory` accordingly.
+- **Container runtime**: Podman with `quay.io` registry (resolves `biocontainers/` prefixes)
+- **Resource labels**: `process_single`, `process_low`, `process_medium`, `process_high`, `process_high_memory` — all capped by `max_memory` and `max_cpus`
+- **publishDir**: Results are published via symlink by default (`publish_dir_mode = 'symlink'`)
+- **Execution reports**: Timeline, trace, report, and DAG are generated in `<outdir>/pipeline_info/`
 
 ---
 
 ## Notes
 
-- **Nested Nextflow**: Stages 1 and 4 invoke `nextflow run nf-core/rnaseq` as subprocesses. This is supported but means you will see two layers of Nextflow logs.
-- **Strandedness**: Both samples in the example samplesheet use `reverse` stranded libraries. StringTie is run with `--rf` accordingly.
 - **UMI design**: The 12 bp UMI (`NNNNNNNNNNNN`) is expected to be part of the read structure. Ensure your library was prepared with compatible UMI chemistry.
-- **Novel transcript IDs**: Transcripts assembled by StringTie that do not match the reference are assigned IDs in the form `MSTRG.<n>.<n>`. Reference-matching transcripts retain their original IDs.
+- **Novel transcript IDs**: Transcripts assembled by StringTie that do not match the reference are assigned IDs in the form `MSTRG.<n>.<n>`. Reference-matching transcripts retain their original IDs after `fix_ref_id` processing.
+- **HISAT2 index build**: When available memory exceeds `hisat2_build_memory` (default 200 GB), splice sites and exons are incorporated into the index for improved alignment sensitivity.
