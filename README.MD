@@ -42,14 +42,14 @@ Raw FASTQ (paired-end, UMI-tagged)
 | Step | Process                                  | Description                                                     |
 | ---- | ---------------------------------------- | --------------------------------------------------------------- |
 | 0    | GUNZIP_FASTA / GUNZIP_GTF                | Decompress reference inputs if gzipped                          |
-| 1    | GFFREAD_REF                              | Extract reference transcript FASTA (for strandedness inference)  |
+| 1    | GFFREAD_REF                              | Extract reference transcript FASTA (for strandedness inference) |
 | 2    | FASTQ_QC_TRIM_FILTER_SETSTRANDEDNESS     | FastQC, UMI extract, fastp, FQ_LINT, strandedness inference     |
 | 3    | HISAT2_EXTRACTSPLICESITES + HISAT2_BUILD | Build HISAT2 index with splice site awareness                   |
 | 4    | FASTQ_ALIGN_HISAT2                       | Align reads with `--dta`, sort and index BAMs                   |
 | 5    | BAM_DEDUP_STATS_SAMTOOLS_UMITOOLS        | UMI-based deduplication                                         |
 | 6    | STRINGTIE_DENOVO                         | Per-sample de novo assembly (no reference guide)                |
 | 7    | STRINGTIE_MERGE                          | Merge all per-sample GTFs, anchored to reference annotation     |
-| 8    | FIX_REF_ID                               | Replace `gene_id` with `ref_gene_id` in merged GTF             |
+| 8    | FIX_REF_ID                               | Replace `gene_id` with `ref_gene_id` in merged GTF              |
 | 9    | GFFREAD_DENOVO                           | Extract de novo transcript FASTA from merged GTF                |
 | 10   | SALMON_INDEX                             | Build Salmon index from de novo transcripts                     |
 | 11   | QUANTIFY_PSEUDO_ALIGNMENT                | Salmon quant, tx2gene, tximeta count matrices                   |
@@ -210,12 +210,12 @@ Python helper scripts for reference file preparation:
 
 | Script             | Purpose                                                                                            |
 | ------------------ | -------------------------------------------------------------------------------------------------- |
-| `use_ref_id.py`    | Replaces `gene_id` with `ref_gene_id` when both attributes are present (used by FIX_REF_ID process) |
+| `use_ref_id.py`    | Replaces `gene_id` with `ref_gene_id` when both attributes are present (used by FIX_REF_ID process)|
 | `filter_gtf.py`    | Removes GTF entries for sequences not present in the FASTA                                         |
 | `fix_gene_type.py` | Converts `gene_biotype`/`transcript_biotype` to `gene_type`/`transcript_type`                      |
-| `fix_gtf_chr.py`   | Prepends `chr` to numeric chromosome names (e.g. `1` → `chr1`)                                    |
+| `fix_gtf_chr.py`   | Prepends `chr` to numeric chromosome names (e.g. `1` → `chr1`)                                     |
 | `get_genes.py`     | Extracts only gene-level features from a GTF                                                       |
-| `reformat_fasta.py` | Reformats FASTA to 61 bp per line                                                                 |
+| `reformat_fasta.py`| Reformats FASTA to 61 bp per line                                                                  |
 
 ---
 
