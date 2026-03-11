@@ -7,7 +7,6 @@ bbsplit/*trim*/
 results*/
 work/
 .nextflow*
-stringtie*/
 filtered_reads/
 trimgalore*
 .DS_Store
