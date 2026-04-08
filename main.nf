@@ -42,14 +42,15 @@ def parseSamplesheet(samplesheet) {
         .fromPath(samplesheet)
         .splitCsv(header: true, strip: true)
         .map { row ->
+            if (!row.fastq_2 || row.fastq_2.trim() == '') {
+                error "Sample '${row.sample}': this pipeline requires paired-end reads. Please provide fastq_2 for all samples."
+            }
             def meta = [
                 id          : row.sample,
                 strandedness: row.strandedness ?: 'auto',
-                single_end  : (!row.fastq_2 || row.fastq_2.trim() == '')
+                single_end  : false
             ]
-            def reads = meta.single_end
-                ? [ file(row.fastq_1) ]
-                : [ file(row.fastq_1), file(row.fastq_2) ]
+            def reads = [ file(row.fastq_1), file(row.fastq_2) ]
             return [ meta, reads ]
         }
 }
