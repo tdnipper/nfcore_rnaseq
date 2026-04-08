@@ -174,26 +174,30 @@ workflow DENOVO_RNASEQ {
 
     /*
     ============================================================
-        STEP 5: UMI deduplication
+        STEP 5: UMI deduplication (only when --with_umi is true)
     ============================================================
     */
 
-    ch_bam_bai = FASTQ_ALIGN_HISAT2.out.bam
-        .join(FASTQ_ALIGN_HISAT2.out.bai, by: [0], remainder: true)
-        .join(FASTQ_ALIGN_HISAT2.out.csi, by: [0], remainder: true)
-        .map { meta, bam, bai, csi ->
-            bai ? [ meta, bam, bai ] : [ meta, bam, csi ]
-        }
+    if (params.with_umi) {
+        ch_bam_bai = FASTQ_ALIGN_HISAT2.out.bam
+            .join(FASTQ_ALIGN_HISAT2.out.bai, by: [0], remainder: true)
+            .join(FASTQ_ALIGN_HISAT2.out.csi, by: [0], remainder: true)
+            .map { meta, bam, bai, csi ->
+                bai ? [ meta, bam, bai ] : [ meta, bam, csi ]
+            }
 
-    BAM_DEDUP_STATS_SAMTOOLS_UMITOOLS ( ch_bam_bai, params.umitools_dedup_stats )
-    ch_dedup_bam = BAM_DEDUP_STATS_SAMTOOLS_UMITOOLS.out.bam
-    ch_versions  = ch_versions.mix(BAM_DEDUP_STATS_SAMTOOLS_UMITOOLS.out.versions)
-    ch_multiqc_files = ch_multiqc_files.mix(
-        BAM_DEDUP_STATS_SAMTOOLS_UMITOOLS.out.deduplog.map { meta, f -> f },
-        BAM_DEDUP_STATS_SAMTOOLS_UMITOOLS.out.stats.map    { meta, f -> f },
-        BAM_DEDUP_STATS_SAMTOOLS_UMITOOLS.out.flagstat.map { meta, f -> f },
-        BAM_DEDUP_STATS_SAMTOOLS_UMITOOLS.out.idxstats.map { meta, f -> f },
-    )
+        BAM_DEDUP_STATS_SAMTOOLS_UMITOOLS ( ch_bam_bai, params.umitools_dedup_stats )
+        ch_bam_for_assembly = BAM_DEDUP_STATS_SAMTOOLS_UMITOOLS.out.bam
+        ch_versions  = ch_versions.mix(BAM_DEDUP_STATS_SAMTOOLS_UMITOOLS.out.versions)
+        ch_multiqc_files = ch_multiqc_files.mix(
+            BAM_DEDUP_STATS_SAMTOOLS_UMITOOLS.out.deduplog.map { meta, f -> f },
+            BAM_DEDUP_STATS_SAMTOOLS_UMITOOLS.out.stats.map    { meta, f -> f },
+            BAM_DEDUP_STATS_SAMTOOLS_UMITOOLS.out.flagstat.map { meta, f -> f },
+            BAM_DEDUP_STATS_SAMTOOLS_UMITOOLS.out.idxstats.map { meta, f -> f },
+        )
+    } else {
+        ch_bam_for_assembly = FASTQ_ALIGN_HISAT2.out.bam
+    }
 
     /*
     ============================================================
@@ -201,7 +205,7 @@ workflow DENOVO_RNASEQ {
     ============================================================
     */
 
-    STRINGTIE_DENOVO ( ch_dedup_bam )
+    STRINGTIE_DENOVO ( ch_bam_for_assembly )
     ch_versions = ch_versions.mix(STRINGTIE_DENOVO.out.versions.first())
 
     /*
