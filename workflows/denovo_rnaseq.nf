@@ -248,7 +248,7 @@ workflow DENOVO_RNASEQ {
     ============================================================
     */
 
-    SALMON_INDEX ( [], ch_denovo_fasta )
+    SALMON_INDEX ( ch_fasta, ch_denovo_fasta )
     ch_versions = ch_versions.mix(SALMON_INDEX.out.versions)
 
     /*
