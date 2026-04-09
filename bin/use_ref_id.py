@@ -41,7 +41,7 @@ def replace_gene_id_with_ref_gene_id(gtf_file, output_file):
                 # Replace gene_id value in-place to preserve original attribute order
                 attributes = re.sub(
                     r'(gene_id\s+")[^"]*(")',
-                    rf'\g<1>{re.escape(ref_id)}\g<2>',
+                    rf'\g<1>{ref_id}\g<2>',
                     attributes,
                     count=1,
                 )
