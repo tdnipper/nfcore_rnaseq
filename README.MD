@@ -128,12 +128,13 @@ nextflow run tdnipper/nfcore_rnaseq \
 | `--hisat2_index`         | No       | —              | Pre-built HISAT2 index (skips HISAT2_BUILD)  |
 | `--with_umi`             | No       | `true`         | Enable UMI extraction and deduplication      |
 | `--umitools_bc_pattern`  | No       | `NNNNNNNNNNNN` | UMI barcode pattern (12 bp)                  |
-| `--stringtie_min_length` | No       | `50`           | Minimum assembled transcript length          |
-| `--stringtie_min_tpm`    | No       | `1`            | Minimum TPM for StringTie merge              |
+| `--stringtie_min_length` | No       | `50`           | Minimum assembled transcript length (bp). Applied to both per-sample de novo assembly and merge. |
+| `--stringtie_min_tpm`    | No       | `1`            | Minimum TPM for StringTie merge. Transcripts below this threshold are excluded from the merged assembly. Lower for maximum sensitivity. |
 | `--skip_fastqc`          | No       | `false`        | Skip FastQC steps                            |
 | `--skip_multiqc`         | No       | `false`        | Skip MultiQC report                          |
-| `--max_memory`           | No       | `64 GB`        | Maximum available RAM                        |
-| `--max_cpus`             | No       | `8`            | Maximum available CPU cores                  |
+| `--max_memory`           | No       | `202 GB`       | Maximum available RAM                        |
+| `--max_cpus`             | No       | `16`           | Maximum available CPU cores                  |
+| `--max_time`             | No       | `48 h`         | Maximum wall time per process                |
 
 See `nextflow.config` for the full list of configurable parameters.
 
